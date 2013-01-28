@@ -258,5 +258,100 @@ class FinderOnWSGITests(FinderTests, unittest.TestCase):
     fake_request = staticmethod(fake_wsgi_request)
 
 
+class SubFinderTests(object):
+    def assertResponseCode(self, code,
+            finder, method, path, headers=None, body=""):
+        response = self.fake_request(finder, method, path, headers, body)
+        self.assertIsNotNone(response, "no response was generated at all!")
+        self.assertEqual(response['code'], code)
+
+    def test_traverses_down(self):
+        def handler(request):
+            return "OK!"
+
+        subf = pathfinder.Finder([
+            (r"/bar$", handler, ["GET"]),
+        ])
+        finder = pathfinder.Finder([
+            (r"^/foo(?=/)", subf, ["GET"]),
+        ])
+
+        self.assertResponseCode(200, finder, "GET", "/foo/bar")
+
+    def test_404_on_subfinder_miss(self):
+        subf = pathfinder.Finder([])
+        finder = pathfinder.Finder([
+            (r"^/foo(?=/)", subf, ["GET"]),
+        ])
+
+        self.assertResponseCode(404, finder, "GET", "/foo/bar")
+
+    def test_404_handler_on_inner_finder(self):
+        l = []
+
+        class FourOhFourFinder(pathfinder.Finder):
+            def on_404(self, request):
+                l.append(None)
+                return pathfinder.Response("Four Oh Four", code=200)
+
+        subf = FourOhFourFinder([])
+        finder = pathfinder.Finder([
+            (r"^/foo(?=/)", subf, ["GET"]),
+        ])
+
+        self.assertResponseCode(200, finder, "GET", "/foo/bar")
+        self.assertEqual(l, [None])
+
+    def test_500_handler_on_inner_finder(self):
+        l = []
+
+        class FiveHundredFinder(pathfinder.Finder):
+            def on_500(self, request, exc_triple):
+                l.append(2)
+                return pathfinder.Response("Five Hundred", code=200)
+
+        def handler(request):
+            l.append(1)
+            raise RuntimeError("ZOMG")
+
+        subf = FiveHundredFinder([
+            (r"/bar$", handler, ["GET"]),
+        ])
+        finder = pathfinder.Finder([
+            (r"^/foo(?=/)", subf, ["GET"]),
+        ])
+
+        self.assertResponseCode(200, finder, "GET", "/foo/bar")
+        self.assertEqual(l, [1, 2])
+
+    def test_no_multiple_branch_traversal(self):
+        """could have gone either way, but this decision was made
+
+        when a *sub*finder doesn't find a match, we 404 all the way out to the
+        response rather than resuming the search in the parent finder
+        """
+        def handler(request):
+            return "OK!"
+
+        subf1 = pathfinder.Finder([])
+        subf2 = pathfinder.Finder([
+            (r"nicator$", handler, ["GET"]),
+        ])
+        outer = pathfinder.Finder([
+            (r"^/", subf1, ["GET"]),
+            (r"^/frob", subf2, ["GET"]),
+        ])
+
+        self.assertResponseCode(404, outer, "GET", "/frobnicator")
+
+
+class SubFinderOnGeventHTTPTests(SubFinderTests, unittest.TestCase):
+    fake_request = staticmethod(fake_gevent_http_request)
+
+
+class SubFinderOnWSGITests(SubFinderTests, unittest.TestCase):
+    fake_request = staticmethod(fake_wsgi_request)
+
+
 if __name__ == '__main__':
     unittest.main()
