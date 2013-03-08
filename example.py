@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # vim: fileencoding=utf8:et:sta:ai:sw=4:ts=4:sts=4
 
+import logging
 import os
 import sys
 
@@ -22,38 +23,36 @@ def hello_name(request, name):
 def goodbye_name(request, name):
     return "goodbye, %s!" % name
 
+def text_plain(request):
+    response = pathfinder.Response('this is text/plain')
+    response.headers['Content-Type'] = 'text/plain'
+    return response
+
 
 #
 # Delegating to sub url-schemes
 #
-def pass_it_down(request):
-    # just by returning (finder_instance, request_instance),
-    # the next finder will be used to continue matching against the path
+sub_finder = pathfinder.Finder([
+    # regexes here will be compared against the *rest* of the url,
+    # everything but the portion that matched in the parent finder
+    (r"hello/$", hello_world, ["GET"]),
+])
 
-    # this also allows for modifying the request instance on the way down
-    return sub_finder, request
 
-
-urls = [
+#
+# Top-level finder
+#
+finder = pathfinder.Finder([
     # regex-based url routing,
     # with groups and named groups mapping to *args and **kwargs respectively
     (r"^/helloworld/$", hello_world, ["GET"]),
     (r"^/hello/(\w+)/$", hello_name, ["GET"]),
     (r"^/goodbye/(?P<name>\w+)/$", goodbye_name, ["GET"]),
+    (r"^/textplain/$", text_plain, ["GET"]),
 
     # delegating to sub-finders - note the lack of $ in the regex
-    (r"^/sub/", pass_it_down, ["GET"]),
-]
-
-sub_urls = [
-    # regexes here will be compared against the *rest* of the url,
-    # everything but the portion that matched in the parent finder
-    (r"hello/$", hello_world, ["GET"]),
-]
-
-sub_finder = pathfinder.Finder(sub_urls)
-
-finder = pathfinder.Finder(urls)
+    (r"^/sub/", sub_finder, ["GET"]),
+])
 
 
 #
@@ -71,6 +70,7 @@ def main(environ, argv):
     else:
         server = gevent.http.HTTPServer(('127.0.0.1', 8070),
                 finder.gevent_http_handle)
+    logging.basicConfig()
     server.serve_forever()
 
 
