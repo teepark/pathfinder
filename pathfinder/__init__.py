@@ -404,9 +404,9 @@ def _parse_option_header(value, options=None):
     options = options or {}
     for match in _option_re.finditer(tail):
         key = match.group(1).lower()
-        value = match.group(2)
-        if value[0] == value[-1] == '"':
-            value = value[1:-1]
-        value = value.replace('\\\\', '\\').replace('\\"', '"')
-        options[key] = value
+        val = match.group(2)
+        if val[0] == val[-1] == '"':
+            val = val[1:-1]
+        val = val.replace('\\\\', '\\').replace('\\"', '"')
+        options[key] = val
     return value.lower().strip(), options
