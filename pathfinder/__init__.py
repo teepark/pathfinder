@@ -1,6 +1,6 @@
 """pathfinder -- simple modular HTTP request routing
 
-Copyright 2011 Jawbone Inc.
+Copyright 2012-2013 Jawbone Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ limitations under the License.
 from __future__ import absolute_import
 
 import BaseHTTPServer
+import collections
 import Cookie
 import logging
 import os
@@ -31,7 +32,7 @@ try:
 except ImportError:
     from StringIO import StringIO
 
-from . import util
+from . import multipart, util
 
 try:
     import gevent.core
@@ -289,14 +290,35 @@ class Request(object):
         self.query_params = util.OrderedMultiDict(urlparse.parse_qsl(parsed.query))
         "url-encoded parameters from the querystring"
 
-        self.headers = util.CaseInsensitiveOrderedMultiDict(headers)
+        headers, ctopts, cdopts = _parse_headers(headers)
+        self._ctopts = ctopts
+        self._cdopts = cdopts
+
+        self.headers = headers
         "Request headers"
 
         self.cookies = Cookie.SimpleCookie()
         "Cookies in the request"
 
+        self.parts = self._parse_parts()
+        "Sections of a multipart request body"
+
         for value in self.headers.getall('cookie'):
             self.cookies.load(value)
+
+    def _parse_parts(self):
+        if self.headers.get('content-type', '') == 'multipart/form-data':
+            boundary = self.content_type_opts.get('boundary', '')
+            clength = int(self.headers.get('content-length', -1))
+            charset = self.content_type_opts.get('charset', 'utf8')
+            parser = multipart.MultipartParser(self, boundary, clength,
+                    disk_limit=2**32, mem_limit=2**28, memfile_limit=2**28,
+                    charset=charset)
+            for part in parser:
+                headers, ctopts, cdopts = _parse_headers(part.headerlist)
+                yield multipartpart(
+                        headers, part.size, part.name, part.filename,
+                        part.charset, ctopts, cdopts, part.value)
 
     @property
     def body_params(self):
@@ -309,12 +331,22 @@ class Request(object):
 
             ctype = self.headers.get('content-type', None)
             if ctype and self.method in ('POST', 'PUT'):
-                ctype, opts = _parse_option_header(ctype)
+                ctype, opts = multipart.parse_options_header(ctype)
                 if ctype in ('application/x-www-form-urlencoded',
                         'application/x-form-url-encoded'):
                     self._post.update(urlparse.parse_qsl(self.read()))
 
         return self._post
+
+    @property
+    def content_type_opts(self):
+        "options from the Content-Type header"
+        return self._ctopts
+
+    @property
+    def content_disposition_opts(self):
+        "options from the Content-Disposition header"
+        return self._cdopts
 
     @property
     def params(self):
@@ -388,25 +420,22 @@ class Response(object):
             self.headers['Content-Type'] = self.default_content_type
 
 
+def _parse_headers(keyvals):
+    headers = util.CaseInsensitiveOrderedMultiDict()
+    ctopts, cdopts = {}, {}
+    for key, val in keyvals:
+        lkey = key.lower()
+        if lkey == 'content-type':
+            val, ctopts = multipart.parse_options_header(val)
+        elif lkey == 'content-disposition':
+            val, cdopts = multipart.parse_options_header(val)
+        headers[key] = val
+    return headers, ctopts, cdopts
+
+
+multipartpart = collections.namedtuple('multipartpart',
+        ('headers', 'size', 'name', 'filename', 'charset',
+            'content_type_opts', 'content_disposition_opts', 'body'))
+
+
 NoResponse = object()
-
-
-_special = re.escape('()<>@,;:\\"/[]?={} \t')
-_qstr = '"(?:\\\\.|[^"])*"'
-_value = '(?:[^%s]+|%s)' % (_special, _qstr)
-_option = '(?:;|^)\s*([^%s]+)\s*=\s*(%s)' % (_special, _value)
-_option_re = re.compile(_option)
-
-def _parse_option_header(value, options=None):
-    if ';' not in value:
-        return value.lower().strip(), {}
-    value, tail = value.split(';', 1)
-    options = options or {}
-    for match in _option_re.finditer(tail):
-        key = match.group(1).lower()
-        val = match.group(2)
-        if val[0] == val[-1] == '"':
-            val = val[1:-1]
-        val = val.replace('\\\\', '\\').replace('\\"', '"')
-        options[key] = val
-    return value.lower().strip(), options
