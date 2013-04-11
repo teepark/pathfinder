@@ -297,14 +297,11 @@ class Request(object):
         self.headers = headers
         "Request headers"
 
-        self.cookies = Cookie.SimpleCookie()
+        self.cookies = _parse_cookies(self.headers.getall('cookie'))
         "Cookies in the request"
 
         self.parts = self._parse_parts()
         "Sections of a multipart request body"
-
-        for value in self.headers.getall('cookie'):
-            self.cookies.load(value)
 
     def _parse_parts(self):
         if self.headers.get('content-type', '') == 'multipart/form-data':
@@ -431,6 +428,13 @@ def _parse_headers(keyvals):
             val, cdopts = multipart.parse_options_header(val)
         headers[key] = val
     return headers, ctopts, cdopts
+
+
+def _parse_cookies(cookie_headers):
+    cookies = Cookie.SimpleCookie()
+    for value in cookie_headers:
+        cookies.load(value)
+    return cookies
 
 
 multipartpart = collections.namedtuple('multipartpart',
