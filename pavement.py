@@ -3,7 +3,7 @@ from paver.path import path
 from paver.setuputils import setup
 
 
-VERSION = (0, 2, 0, "")
+VERSION = (0, 2, 1, "")
 
 setup(
     name="pathfinder",
