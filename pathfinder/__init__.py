@@ -261,6 +261,9 @@ class Finder(object):
         (``NoResponse`` is also an option on gevent.http). It is called to
         generate the response in error conditions such as a handler raising.
         """
+        log.error("error from handler on %s:\n%s" % (
+            request.path,
+            ''.join(traceback.format_exception(*exc_triple))))
         return Response("", code=500, headers=[("Content-Length", "0")])
 
 
