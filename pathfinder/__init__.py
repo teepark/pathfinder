@@ -74,10 +74,16 @@ class Finder(object):
     def __init__(self, urlmap):
         self._map = {}
 
-        for regex, handler, verbs in urlmap:
+        for regex, mapping in urlmap:
             regex = re.compile(regex)
-            for verb in verbs:
-                self._map.setdefault(verb.lower(), []).append((regex, handler))
+            if isinstance(mapping, Finder) or hasattr(mapping, '__call__'):
+                for verb in ALL_METHODS:
+                    self._map.setdefault(verb.lower(), []).append(
+                            (regex, mapping))
+            else:
+                for verb, handler in mapping.iteritems():
+                    self._map.setdefault(verb.lower(), []).append(
+                            (regex, handler))
 
     def _resolve(self, method, path):
         for regex, handler in self._map.get(method.lower(), ()):
@@ -290,8 +296,11 @@ class Request(object):
         self.path = parsed.path
         "The full URL path"
 
+        self.query_string = parsed.query
+        "the raw query string"
+
         self.query_params = util.OrderedMultiDict(urlparse.parse_qsl(parsed.query))
-        "url-encoded parameters from the querystring"
+        "decoded parameters from the querystring"
 
         headers, ctopts, cdopts = _parse_headers(headers)
         self._ctopts = ctopts

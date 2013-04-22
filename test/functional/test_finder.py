@@ -98,19 +98,19 @@ class FinderTests(object):
 
     def test_good_request(self):
         finder = pathfinder.Finder([
-            (r"^/foobar$", self.handler_ok, ["GET"]),
+            (r"^/foobar$", {"GET": self.handler_ok}),
         ])
         self.assertResponseCode(200, finder, "GET", "/foobar")
 
     def test_404_by_method(self):
         finder = pathfinder.Finder([
-            (r"^/foobar$", self.handler_ok, ["GET"]),
+            (r"^/foobar$", {"GET": self.handler_ok}),
         ])
         self.assertResponseCode(404, finder, "POST", "/foobar")
 
     def test_404_by_path(self):
         finder = pathfinder.Finder([
-            (r"^/foo$", self.handler_ok, ["GET"]),
+            (r"^/foo$", {"GET": self.handler_ok}),
         ])
         self.assertResponseCode(404, finder, "GET", "/bar")
 
@@ -120,7 +120,7 @@ class FinderTests(object):
             d.update(request.query_params)
             return "OK!"
         finder = pathfinder.Finder([
-            (r"^/foo$", handler, ["GET"]),
+            (r"^/foo$", {"GET": handler}),
         ])
         self.assertResponseCode(200, finder, "GET", "/foo?a=1&b=2")
         self.assertEqual(d, {'a': '1', 'b': '2'})
@@ -132,7 +132,7 @@ class FinderTests(object):
             d.update(request.body_params)
             return "OK!"
         finder = pathfinder.Finder([
-            (r"^/foo$", handler, ["POST"]),
+            (r"^/foo$", {"POST": handler}),
         ])
         req_body = urllib.urlencode({'a': 1, 'b': 2})
         self.assertResponseCode(200, finder, "POST", "/foo",
@@ -147,7 +147,7 @@ class FinderTests(object):
             d.update(request.body_params)
             return "OK!"
         finder = pathfinder.Finder([
-            (r"^/foo$", handler, ["GET"]),
+            (r"^/foo$", {"GET": handler}),
         ])
         req_body = urllib.urlencode({'a': 1, 'b': 2})
         self.assertResponseCode(200, finder, "GET", "/foo",
@@ -162,7 +162,7 @@ class FinderTests(object):
             d.update(request.body_params)
             return "OK!"
         finder = pathfinder.Finder([
-            (r"^/foo$", handler, ["POST"]),
+            (r"^/foo$", {"POST": handler}),
         ])
         req_body = urllib.urlencode({'a': 1, 'b': 2})
         self.assertResponseCode(200, finder, "POST", "/foo", body=req_body)
@@ -172,7 +172,7 @@ class FinderTests(object):
         def handler(request):
             raise RuntimeError("WAT")
         finder = pathfinder.Finder([
-            (r"^/foo$", handler, ["GET"]),
+            (r"^/foo$", {"GET": handler}),
         ])
         self.assertResponseCode(500, finder, "GET", "/foo")
 
@@ -182,7 +182,7 @@ class FinderTests(object):
             m[0] = request.method
             return "OK!"
         finder = pathfinder.Finder([
-            (r"^/foo$", handler, pathfinder.ALL_METHODS),
+            (r"^/foo$", handler),
         ])
         self.assertResponseCode(200, finder, "GET", "/foo")
         self.assertEqual(m[0], "GET")
@@ -197,7 +197,7 @@ class FinderTests(object):
             m[0] = request.path
             return "OK!"
         finder = pathfinder.Finder([
-            (r"^/\w+$", handler, ["GET"]),
+            (r"^/\w+$", {"GET": handler}),
         ])
         self.assertResponseCode(200, finder, "GET", "/foo")
         self.assertEqual(m[0], "/foo")
@@ -213,7 +213,7 @@ class FinderTests(object):
             m[0] = dict(request.headers)
             return "OK!"
         finder = pathfinder.Finder([
-            (r"^/foo$", handler, ["GET"]),
+            (r"^/foo$", {"GET": handler}),
         ])
         self.assertResponseCode(200, finder, "GET", "/foo", headers=h)
         self.assertEqual(m[0], h)
@@ -227,7 +227,7 @@ class FinderTests(object):
             m[0] = dict((k, v.value) for k, v in request.cookies.items())
             return "OK!"
         finder = pathfinder.Finder([
-            (r"^/foo$", handler, ["GET"]),
+            (r"^/foo$", {"GET": handler}),
         ])
         self.assertResponseCode(200, finder, "GET", "/foo", headers=ch)
         self.assertEqual(m[0], c)
@@ -245,7 +245,7 @@ class FinderTests(object):
                 n[0] = True
             return "OK!"
         finder = pathfinder.Finder([
-            (r"^/foo$", handler, ["GET"]),
+            (r"^/foo$", {"GET": handler}),
         ])
         self.assertResponseCode(200, finder, "GET", "/foo", body=body)
 
@@ -270,10 +270,10 @@ class SubFinderTests(object):
             return "OK!"
 
         subf = pathfinder.Finder([
-            (r"/bar$", handler, ["GET"]),
+            (r"/bar$", {"GET": handler}),
         ])
         finder = pathfinder.Finder([
-            (r"^/foo(?=/)", subf, ["GET"]),
+            (r"^/foo(?=/)", {"GET": subf}),
         ])
 
         self.assertResponseCode(200, finder, "GET", "/foo/bar")
@@ -281,7 +281,7 @@ class SubFinderTests(object):
     def test_404_on_subfinder_miss(self):
         subf = pathfinder.Finder([])
         finder = pathfinder.Finder([
-            (r"^/foo(?=/)", subf, ["GET"]),
+            (r"^/foo(?=/)", {"GET": subf}),
         ])
 
         self.assertResponseCode(404, finder, "GET", "/foo/bar")
@@ -296,7 +296,7 @@ class SubFinderTests(object):
 
         subf = FourOhFourFinder([])
         finder = pathfinder.Finder([
-            (r"^/foo(?=/)", subf, ["GET"]),
+            (r"^/foo(?=/)", {"GET": subf}),
         ])
 
         self.assertResponseCode(200, finder, "GET", "/foo/bar")
@@ -315,10 +315,10 @@ class SubFinderTests(object):
             raise RuntimeError("ZOMG")
 
         subf = FiveHundredFinder([
-            (r"/bar$", handler, ["GET"]),
+            (r"/bar$", {"GET": handler}),
         ])
         finder = pathfinder.Finder([
-            (r"^/foo(?=/)", subf, ["GET"]),
+            (r"^/foo(?=/)", {"GET": subf}),
         ])
 
         self.assertResponseCode(200, finder, "GET", "/foo/bar")
@@ -335,11 +335,11 @@ class SubFinderTests(object):
 
         subf1 = pathfinder.Finder([])
         subf2 = pathfinder.Finder([
-            (r"nicator$", handler, ["GET"]),
+            (r"nicator$", {"GET": handler}),
         ])
         outer = pathfinder.Finder([
-            (r"^/", subf1, ["GET"]),
-            (r"^/frob", subf2, ["GET"]),
+            (r"^/", {"GET": subf1}),
+            (r"^/frob", {"GET": subf2}),
         ])
 
         self.assertResponseCode(404, outer, "GET", "/frobnicator")
