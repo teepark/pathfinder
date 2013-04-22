@@ -8,7 +8,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>pathfinder &mdash; pathfinder 0.1.0 documentation</title>
+    <title>pathfinder &mdash; pathfinder 0.2.2 documentation</title>
     
     <link rel="stylesheet" href="static/default.css" type="text/css" />
     <link rel="stylesheet" href="static/pygments.css" type="text/css" />
@@ -16,7 +16,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '',
-        VERSION:     '0.1.0',
+        VERSION:     '0.2.2',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -25,7 +25,7 @@
     <script type="text/javascript" src="static/jquery.js"></script>
     <script type="text/javascript" src="static/underscore.js"></script>
     <script type="text/javascript" src="static/doctools.js"></script>
-    <link rel="top" title="pathfinder 0.1.0 documentation" href="index.html" />
+    <link rel="top" title="pathfinder 0.2.2 documentation" href="index.html" />
     <link rel="next" title="pathfinder.util" href="pathfinder/util.html" />
     <link rel="prev" title="Welcome to pathfinder’s documentation!" href="index.html" /> 
   </head>
@@ -45,7 +45,7 @@
         <li class="right" >
           <a href="index.html" title="Welcome to pathfinder’s documentation!"
              accesskey="P">previous</a> |</li>
-        <li><a href="index.html">pathfinder 0.1.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pathfinder 0.2.2 documentation</a> &raquo;</li> 
       </ul>
     </div>  
 
@@ -57,6 +57,16 @@
   <div class="section" id="module-pathfinder">
 <span id="pathfinder"></span><h1><a class="reference internal" href="#module-pathfinder" title="pathfinder"><tt class="xref py py-mod docutils literal"><span class="pre">pathfinder</span></tt></a><a class="headerlink" href="#module-pathfinder" title="Permalink to this headline">¶</a></h1>
 <p>pathfinder &#8211; simple modular HTTP request routing</p>
+<p>Copyright 2012-2013 Jawbone Inc.</p>
+<p>Licensed under the Apache License, Version 2.0 (the &#8220;License&#8221;);
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at</p>
+<p><a class="reference external" href="http://www.apache.org/licenses/LICENSE-2.0">http://www.apache.org/licenses/LICENSE-2.0</a></p>
+<p>Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an &#8220;AS IS&#8221; BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.</p>
 <dl class="class">
 <dt id="pathfinder.Finder">
 <em class="property">class </em><tt class="descclassname">pathfinder.</tt><tt class="descname">Finder</tt><big>(</big><em>urlmap</em><big>)</big><a class="headerlink" href="#pathfinder.Finder" title="Permalink to this definition">¶</a></dt>
@@ -124,6 +134,18 @@ argument to handler functions.</p>
 </dd></dl>
 
 <dl class="attribute">
+<dt id="pathfinder.Request.content_disposition_opts">
+<tt class="descname">content_disposition_opts</tt><a class="headerlink" href="#pathfinder.Request.content_disposition_opts" title="Permalink to this definition">¶</a></dt>
+<dd><p>options from the Content-Disposition header</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pathfinder.Request.content_type_opts">
+<tt class="descname">content_type_opts</tt><a class="headerlink" href="#pathfinder.Request.content_type_opts" title="Permalink to this definition">¶</a></dt>
+<dd><p>options from the Content-Type header</p>
+</dd></dl>
+
+<dl class="attribute">
 <dt id="pathfinder.Request.cookies">
 <tt class="descname">cookies</tt><em class="property"> = None</em><a class="headerlink" href="#pathfinder.Request.cookies" title="Permalink to this definition">¶</a></dt>
 <dd><p>Cookies in the request</p>
@@ -148,6 +170,12 @@ argument to handler functions.</p>
 </dd></dl>
 
 <dl class="attribute">
+<dt id="pathfinder.Request.parts">
+<tt class="descname">parts</tt><em class="property"> = None</em><a class="headerlink" href="#pathfinder.Request.parts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Sections of a multipart request body</p>
+</dd></dl>
+
+<dl class="attribute">
 <dt id="pathfinder.Request.path">
 <tt class="descname">path</tt><em class="property"> = None</em><a class="headerlink" href="#pathfinder.Request.path" title="Permalink to this definition">¶</a></dt>
 <dd><p>The full URL path</p>
@@ -156,7 +184,13 @@ argument to handler functions.</p>
 <dl class="attribute">
 <dt id="pathfinder.Request.query_params">
 <tt class="descname">query_params</tt><em class="property"> = None</em><a class="headerlink" href="#pathfinder.Request.query_params" title="Permalink to this definition">¶</a></dt>
-<dd><p>url-encoded parameters from the querystring</p>
+<dd><p>decoded parameters from the querystring</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pathfinder.Request.query_string">
+<tt class="descname">query_string</tt><em class="property"> = None</em><a class="headerlink" href="#pathfinder.Request.query_string" title="Permalink to this definition">¶</a></dt>
+<dd><p>the raw query string</p>
 </dd></dl>
 
 <dl class="method">
@@ -218,7 +252,7 @@ argument to handler functions.</p>
         <li class="right" >
           <a href="index.html" title="Welcome to pathfinder’s documentation!"
              >previous</a> |</li>
-        <li><a href="index.html">pathfinder 0.1.0 documentation</a> &raquo;</li> 
+        <li><a href="index.html">pathfinder 0.2.2 documentation</a> &raquo;</li> 
       </ul>
     </div>
     <div class="footer">
